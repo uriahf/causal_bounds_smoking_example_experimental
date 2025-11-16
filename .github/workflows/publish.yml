@@ -23,13 +23,14 @@ jobs:
         with:
           use-public-rspm: true
 
-      - name: Install R dependencies
-        uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          packages: |
-            any::dplyr
-            any::reactable
-            any::tibble
+      - name: Install R packages
+        run: |
+          Rscript -e 'install.packages(c(
+            "knitr",
+            "rmarkdown",
+            "reactable",
+            "dplyr"
+          ), repos = "https://cloud.r-project.org")'
 
       - name: Publish to Netlify
         uses: quarto-dev/quarto-actions/publish@v2
