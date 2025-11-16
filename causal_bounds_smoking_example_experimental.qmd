@@ -1,0 +1,1001 @@
+---
+title: "Causal Bounds for Experimental Data"
+author: "Uriah Finkel"
+format: revealjs
+---
+
+## {.smaller}
+
+```{r}
+#| echo: false
+
+library(reactable)
+library(dplyr)
+```
+
+::::: columns
+::: {.column width="60%"}
+
+### Causal Question {.smaller}
+
+What are the bounds on the Individual Treatment Effect (ITE) of smoking 🚬 vs. not smoking 🚭 on COPD 🫁, given an Experimental Data?
+
+These kind of experiments are considered to be non-ethical, yet even if they were - we can't tell for sure what is the proportion of the **Responders** in the population.
+
+Fortunately we can use [Fréchet Inequalities](https://causality.cs.ucla.edu/blog/index.php/2019/11/05/frechet-inequalities/) for Causal Bounds.
+:::
+
+::: {.column width="40%"}
+![](supervillain_rct.png)
+:::
+:::::
+
+##  {.smaller}
+
+::::: columns
+::: {.column width="35%"}
+```{r}
+
+set.seed(42)
+
+experimental_data <- tibble::tribble(
+    ~"X", ~"Y_a0", ~"Y_a1",
+    "0", "0", "1",
+    "0", "0", "0",
+    "0", "1", "1",
+    "0", "0", "1",
+    "0", "0", "0",
+    "0", "0", "0",
+    "1", "1", "1",
+    "1", "1", "1",
+    "1", "1", "1",
+    "1", "1", "1",
+    "1", "1", "1",
+    "1", "0", "1",
+    "1", "0", "0",
+    "1", "0", "0",
+    "1", "1", "1",
+    "1", "0", "1"
+) |> 
+    bind_cols( 
+        "A" = sample(c(rep("0", 8), rep("1", 8)))
+    ) |> relocate(
+        A, .before = Y_a0
+    ) |> 
+    mutate(
+        observed_y = case_when(
+            A == "0" ~ Y_a0,
+            A == "1" ~ Y_a1
+        ),
+        ITE = as.numeric(Y_a1) - as.numeric(Y_a0)
+    ) |> 
+  mutate(
+    observed_y = case_when(
+      A == "0" ~ Y_a0,
+      A == "1" ~ Y_a1
+    ),
+    ITE = as.numeric(Y_a1) - as.numeric(Y_a0)
+  ) 
+
+countefactual_data_reactable_raw <- experimental_data |> 
+  reactable(
+    theme = reactableTheme(
+      backgroundColor = "#F5F2EB",
+      tableStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      headerStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      cellStyle = list(
+        backgroundColor = "#F5F2EB"
+      )),
+  sortable = FALSE,
+  defaultPageSize = 19,
+  columns = list(
+    observed_y = colDef(
+      show = FALSE
+    ),
+    A = colDef(
+      show = FALSE
+    ),
+    ITE = colDef(
+      show = FALSE
+    ),
+    Y_a0 = colDef(
+      name = "Y<sup>0",
+      html = TRUE
+    ),
+    Y_a1 = colDef(
+      name = "Y<sup>1",
+      html = TRUE
+    )
+  ),
+  defaultColDef = colDef(maxWidth = 50),
+  style = list(fontSize = "1rem"))
+
+
+countefactual_data_reactable_raw
+```
+:::
+
+::: {.column width="65%"}
+#### 😇 God-Given Counterfactual Data
+
+-   By God-Given knowledge we have access to the true counterfactual outcomes for each individual for smoking 🚬 and for not smoking 🚭
+:::
+:::::
+
+##  {.smaller}
+
+::::: columns
+::: {.column width="35%"}
+```{r}
+
+
+countefactual_data_reactable_raw_with_ITE <- experimental_data |> 
+  reactable(
+    theme = reactableTheme(backgroundColor = "#F5F2EB",
+      tableStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      headerStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      cellStyle = list(
+        backgroundColor = "#F5F2EB"
+      )),
+  sortable = FALSE,
+  defaultPageSize = 19,
+  columns = list(
+    observed_y = colDef(
+      show = FALSE
+    ),
+    A = colDef(
+      show = FALSE
+    ),
+    Y_a0 = colDef(
+      name = "Y<sup>0",
+      html = TRUE
+    ),
+    Y_a1 = colDef(
+      name = "Y<sup>1",
+      html = TRUE
+    ),
+    ITE = colDef(
+      style = function(value) {
+      if(value == "1")
+      list(background = "pink")
+    }
+    )
+  ),
+  defaultColDef = colDef(maxWidth = 50),
+  style = list(fontSize = "1rem"))
+
+countefactual_data_reactable_raw_with_ITE
+```
+:::
+
+::: {.column width="65%"}
+#### 😇 God-Given Counterfactual Data
+
+-   By God-Given knowledge we have access to the true counterfactual outcomes for each individual for smoking 🚬 and for not smoking 🚭
+
+-   This gives us 4 Responders: people who get COPD only if they smoke, and avoid it otherwise. It also goes by the name **PNS**: **P**robability of **N**ecessity and **S**ufficiensy:
+
+$\text{PNS} = \frac{4}{16} = 0.25$
+:::
+:::::
+
+##  {.smaller}
+
+::::: columns
+::: {.column width="35%"}
+```{r}
+
+
+countefactual_data_reactable_raw_with_ITE <- experimental_data |> 
+  reactable(
+    theme = reactableTheme(backgroundColor = "#F5F2EB",
+      tableStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      headerStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      cellStyle = list(
+        backgroundColor = "#F5F2EB"
+      )),
+  sortable = FALSE,
+  defaultPageSize = 19,
+  columns = list(
+    observed_y = colDef(
+      show = FALSE
+    ),
+    A = colDef(
+      style = function(value) {
+      if(value == "1")
+      list(background = "#F2F3AE")
+    }
+    ),
+    Y_a0 = colDef(
+      name = "Y<sup>0",
+      html = TRUE
+    ),
+    Y_a1 = colDef(
+      name = "Y<sup>1",
+      html = TRUE
+    ),
+    ITE = colDef(
+      style = function(value) {
+      if(value == "1")
+      list(background = "pink")
+    }
+    )
+  ),
+  defaultColDef = colDef(maxWidth = 50),
+  style = list(fontSize = "1rem"))
+
+countefactual_data_reactable_raw_with_ITE
+```
+:::
+
+::: {.column width="65%"}
+#### 🦹 Evil RCT for Counterfactual Estimation
+
+-   By God-Given knowledge we have access to the true counterfactual outcomes for each individual for smoking 🚬 and for not smoking 🚭
+
+-   This gives us 4 Responders: people who get COPD only if they smoke, and avoid it otherwise. It also goes by the name **PNS**: **P**robability of **N**ecessity and **S**ufficiensy:
+
+$\text{PNS} = \frac{4}{16} = 0.25$
+
+-   In order to estimate the **A**verage-**T**reatment-**E**ffect an evil researcher forced a Randomized Controlled Trial.
+:::
+:::::
+
+##  {.smaller}
+
+::::: columns
+::: {.column width="35%"}
+```{r}
+
+
+countefactual_data_reactable_raw_with_ITE <- experimental_data |> 
+  reactable(
+    theme = reactableTheme(backgroundColor = "#F5F2EB",
+      tableStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      headerStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      cellStyle = list(
+        backgroundColor = "#F5F2EB"
+      )),
+  sortable = FALSE,
+  defaultPageSize = 19,
+  columns = list(
+    observed_y = colDef(
+      name = "Y",
+      style = function(value) {
+      if(value == "1")
+      list(background = "pink")
+    }
+    ),
+    A = colDef(
+      style = function(value) {
+      if(value == "1")
+      list(background = "#F2F3AE")
+    }
+    ),
+    Y_a0 = colDef(
+      show=FALSE
+    ),
+    Y_a1 = colDef(
+      show=FALSE
+    ),
+    ITE = colDef(
+      show=FALSE
+    )
+  ),
+  defaultColDef = colDef(maxWidth = 50),
+  style = list(fontSize = "1rem"))
+
+countefactual_data_reactable_raw_with_ITE
+```
+:::
+
+::: {.column width="65%"}
+#### 🦹 Evil RCT for Counterfactual Estimation
+
+-   By God-Given knowledge we have access to the true counterfactual outcomes for each individual for smoking 🚬 and for not smoking 🚭
+
+-   This gives us 4 Responders: people who get COPD only if they smoke, and avoid it otherwise. It also goes by the name **PNS**: **P**robability of **N**ecessity and **S**ufficiensy:
+
+$\text{PNS} = \frac{4}{16} = 0.25$
+
+-   In order to estimate the **A**verage-**T**reatment-**E**ffect an evil researcher forced a Randomized Controlled Trial.
+
+-   But even the Supervillian doesn't have an access for the Counterfactual Data!
+:::
+:::::
+
+##  {.smaller}
+
+::::: columns
+::: {.column width="50%"}
+#### Control Arm 🚭
+
+$$\small{\hat{p}(Y=1|do(A=0)} = \frac{4}{8}$$
+
+```{r}
+
+countefactual_data_non_smoking_parents <- experimental_data |> 
+  filter(A == "0")
+
+real_data_reactable_raw_non_smoking_parents <- countefactual_data_non_smoking_parents |> 
+  reactable(
+        theme = reactableTheme(backgroundColor = "#F5F2EB",
+      tableStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      headerStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      cellStyle = list(
+        backgroundColor = "#F5F2EB"
+      )),
+  sortable = FALSE,
+  defaultPageSize = 19,
+  columns = list(
+      observed_y = colDef(
+        name = "Y",
+        style = function(value, index, name) {
+          # base style: pink if Y == "1"
+          style <- if (value == "1") {
+            list(background = "pink")
+          } else {
+            list()
+          }
+          
+          A_value <- countefactual_data_non_smoking_parents$A[index]
+          if ((A_value == "1" && value == "1") | (A_value == "0" && value == "0")) {
+            style$fontWeight <- "bold"
+          }
+          
+          style
+        }
+      ),
+      A = colDef(
+        style = function(value, index, name) {
+          # base style: yellow if A == "1"
+          style <- if (value == "1") {
+            list(background = "#F2F3AE")
+          } else {
+            list()
+          }
+          
+          Y_value <- countefactual_data_non_smoking_parents$observed_y[index]
+          if ((value == "1" && Y_value == "1") | (value == "0" && Y_value == "0")) {
+            style$fontWeight <- "bold"
+          }
+          
+          style
+        }
+      ),
+    X = colDef(
+      show = FALSE 
+    ),
+    Y_a0 = colDef(
+      show = FALSE
+    ),
+    Y_a1 = colDef(
+      show = FALSE
+    ),
+    ITE = colDef(
+      show = FALSE
+    )
+  ),
+  defaultColDef = colDef(maxWidth = 50),
+  style = list(fontSize = "1rem"))
+
+real_data_reactable_raw_non_smoking_parents
+
+```
+:::
+
+::: {.column width="50%"}
+#### Treatment Arm 🚬
+
+$$\small{\hat{p}(Y=1|do(A=1))} = \frac{5}{8}$$
+
+```{r}
+
+countefactual_data_smoking_parents <- experimental_data |> 
+  filter(A == "1")
+
+real_data_reactable_raw_smoking_parents <- countefactual_data_smoking_parents |> 
+  reactable(
+        theme = reactableTheme(backgroundColor = "#F5F2EB",
+      tableStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      headerStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      cellStyle = list(
+        backgroundColor = "#F5F2EB"
+      )),
+  sortable = FALSE,
+  defaultPageSize = 19,
+  columns = list(
+      observed_y = colDef(
+        name = "Y",
+        style = function(value, index, name) {
+          # base style: pink if Y == "1"
+          style <- if (value == "1") {
+            list(background = "pink")
+          } else {
+            list()
+          }
+          
+          A_value <- countefactual_data_smoking_parents$A[index]
+          if ((A_value == "1" && value == "1") | (A_value == "0" && value == "0")) {
+            style$fontWeight <- "bold"
+          }
+          
+          style
+        }
+      ),
+      A = colDef(
+        style = function(value, index, name) {
+          # base style: yellow if A == "1"
+          style <- if (value == "1") {
+            list(background = "#F2F3AE")
+          } else {
+            list()
+          }
+          
+          Y_value <- countefactual_data_smoking_parents$observed_y[index]
+          if ((value == "1" && Y_value == "1") | (value == "0" && Y_value == "0")) {
+            style$fontWeight <- "bold"
+          }
+          
+          style
+        }
+      ),
+    X = colDef(
+      show = FALSE
+    ),
+    Y_a0 = colDef(
+      show = FALSE
+    ),
+    Y_a1 = colDef(
+      show = FALSE
+    ),
+    ITE = colDef(
+      show = FALSE
+    )
+  ),
+  defaultColDef = colDef(maxWidth = 50),
+  style = list(fontSize = "1rem"))
+
+real_data_reactable_raw_smoking_parents
+
+```
+:::
+:::::
+
+In order to estimate Causal Bounds for PNS we can use the [Fréchet Inequalities](https://causality.cs.ucla.edu/blog/index.php/2019/11/05/frechet-inequalities/):
+
+##  {.smaller}
+
+::::: columns
+::: {.column width="50%"}
+#### Control Arm 🚭
+
+$$\small{\hat{p}(Y=1|do(A=0)} = \frac{4}{8}$$
+
+```{r}
+
+countefactual_data_non_smoking_parents <- experimental_data |> 
+  filter(A == "0")
+
+real_data_reactable_raw_non_smoking_parents <- countefactual_data_non_smoking_parents |> 
+  reactable(
+        theme = reactableTheme(backgroundColor = "#F5F2EB",
+      tableStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      headerStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      cellStyle = list(
+        backgroundColor = "#F5F2EB"
+      )),
+  sortable = FALSE,
+  defaultPageSize = 19,
+  columns = list(
+      observed_y = colDef(
+        name = "Y",
+        style = function(value, index, name) {
+          # base style: pink if Y == "1"
+          style <- if (value == "1") {
+            list(background = "pink")
+          } else {
+            list()
+          }
+          
+          A_value <- countefactual_data_non_smoking_parents$A[index]
+          if ((A_value == "1" && value == "1") | (A_value == "0" && value == "0")) {
+            style$fontWeight <- "bold"
+          }
+          
+          style
+        }
+      ),
+      A = colDef(
+        style = function(value, index, name) {
+          # base style: yellow if A == "1"
+          style <- if (value == "1") {
+            list(background = "#F2F3AE")
+          } else {
+            list()
+          }
+          
+          Y_value <- countefactual_data_non_smoking_parents$observed_y[index]
+          if ((value == "1" && Y_value == "1") | (value == "0" && Y_value == "0")) {
+            style$fontWeight <- "bold"
+          }
+          
+          style
+        }
+      ),
+    X = colDef(
+      show = FALSE 
+    ),
+    Y_a0 = colDef(
+      show = FALSE
+    ),
+    Y_a1 = colDef(
+      show = FALSE
+    ),
+    ITE = colDef(
+      show = FALSE
+    )
+  ),
+  defaultColDef = colDef(maxWidth = 50),
+  style = list(fontSize = "1rem"))
+
+real_data_reactable_raw_non_smoking_parents
+
+```
+:::
+
+::: {.column width="50%"}
+#### Treatment Arm 🚬
+
+$$\small{\hat{p}(Y=1|do(A=1))} = \frac{5}{8}$$
+
+```{r}
+
+countefactual_data_smoking_parents <- experimental_data |> 
+  filter(A == "1")
+
+real_data_reactable_raw_smoking_parents <- countefactual_data_smoking_parents |> 
+  reactable(
+        theme = reactableTheme(backgroundColor = "#F5F2EB",
+      tableStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      headerStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      cellStyle = list(
+        backgroundColor = "#F5F2EB"
+      )),
+  sortable = FALSE,
+  defaultPageSize = 19,
+  columns = list(
+      observed_y = colDef(
+        name = "Y",
+        style = function(value, index, name) {
+          # base style: pink if Y == "1"
+          style <- if (value == "1") {
+            list(background = "pink")
+          } else {
+            list()
+          }
+          
+          A_value <- countefactual_data_smoking_parents$A[index]
+          if ((A_value == "1" && value == "1") | (A_value == "0" && value == "0")) {
+            style$fontWeight <- "bold"
+          }
+          
+          style
+        }
+      ),
+      A = colDef(
+        style = function(value, index, name) {
+          # base style: yellow if A == "1"
+          style <- if (value == "1") {
+            list(background = "#F2F3AE")
+          } else {
+            list()
+          }
+          
+          Y_value <- countefactual_data_smoking_parents$observed_y[index]
+          if ((value == "1" && Y_value == "1") | (value == "0" && Y_value == "0")) {
+            style$fontWeight <- "bold"
+          }
+          
+          style
+        }
+      ),
+    X = colDef(
+      show = FALSE
+    ),
+    Y_a0 = colDef(
+      show = FALSE
+    ),
+    Y_a1 = colDef(
+      show = FALSE
+    ),
+    ITE = colDef(
+      show = FALSE
+    )
+  ),
+  defaultColDef = colDef(maxWidth = 50),
+  style = list(fontSize = "1rem"))
+
+real_data_reactable_raw_smoking_parents
+
+```
+:::
+:::::
+
+In order to estimate Causal Bounds for PNS we can use the [Fréchet Inequalities](https://causality.cs.ucla.edu/blog/index.php/2019/11/05/frechet-inequalities/):
+
+$$\small{\text{PNS} = {\hat{p}(Y=1|do(A=1) , Y=0|do(A=0))} \leq min(\hat{p}(Y=1|do(A=1),\hat{p}(Y=0|do(A=0))))}$$ $$\small{\text{PNS} = {\hat{p}(Y=1|do(A=1) , Y=0|do(A=0))} \geq \hat{p}(Y=1|do(A=1)) - \hat{p}(Y=1|do(A=0))}$$
+
+##  {.smaller}
+
+::::: columns
+::: {.column width="50%"}
+#### Control Arm 🚭
+
+$$\small{\hat{p}(Y=1|do(A=0)} = \frac{4}{8}$$
+
+```{r}
+
+countefactual_data_non_smoking_parents <- experimental_data |> 
+  filter(A == "0")
+
+real_data_reactable_raw_non_smoking_parents <- countefactual_data_non_smoking_parents |> 
+  reactable(
+        theme = reactableTheme(backgroundColor = "#F5F2EB",
+      tableStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      headerStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      cellStyle = list(
+        backgroundColor = "#F5F2EB"
+      )),
+  sortable = FALSE,
+  defaultPageSize = 19,
+  columns = list(
+      observed_y = colDef(
+        name = "Y",
+        style = function(value, index, name) {
+          # base style: pink if Y == "1"
+          style <- if (value == "1") {
+            list(background = "pink")
+          } else {
+            list()
+          }
+          
+          A_value <- countefactual_data_non_smoking_parents$A[index]
+          if ((A_value == "1" && value == "1") | (A_value == "0" && value == "0")) {
+            style$fontWeight <- "bold"
+          }
+          
+          style
+        }
+      ),
+      A = colDef(
+        style = function(value, index, name) {
+          # base style: yellow if A == "1"
+          style <- if (value == "1") {
+            list(background = "#F2F3AE")
+          } else {
+            list()
+          }
+          
+          Y_value <- countefactual_data_non_smoking_parents$observed_y[index]
+          if ((value == "1" && Y_value == "1") | (value == "0" && Y_value == "0")) {
+            style$fontWeight <- "bold"
+          }
+          
+          style
+        }
+      ),
+    X = colDef(
+      show = FALSE 
+    ),
+    Y_a0 = colDef(
+      show = FALSE
+    ),
+    Y_a1 = colDef(
+      show = FALSE
+    ),
+    ITE = colDef(
+      show = FALSE
+    )
+  ),
+  defaultColDef = colDef(maxWidth = 50),
+  style = list(fontSize = "1rem"))
+
+real_data_reactable_raw_non_smoking_parents
+
+```
+:::
+
+::: {.column width="50%"}
+#### Treatment Arm 🚬
+
+$$\small{\hat{p}(Y=1|do(A=1))} = \frac{5}{8}$$
+
+```{r}
+
+countefactual_data_smoking_parents <- experimental_data |> 
+  filter(A == "1")
+
+real_data_reactable_raw_smoking_parents <- countefactual_data_smoking_parents |> 
+  reactable(
+        theme = reactableTheme(backgroundColor = "#F5F2EB",
+      tableStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      headerStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      cellStyle = list(
+        backgroundColor = "#F5F2EB"
+      )),
+  sortable = FALSE,
+  defaultPageSize = 19,
+  columns = list(
+      observed_y = colDef(
+        name = "Y",
+        style = function(value, index, name) {
+          # base style: pink if Y == "1"
+          style <- if (value == "1") {
+            list(background = "pink")
+          } else {
+            list()
+          }
+          
+          A_value <- countefactual_data_smoking_parents$A[index]
+          if ((A_value == "1" && value == "1") | (A_value == "0" && value == "0")) {
+            style$fontWeight <- "bold"
+          }
+          
+          style
+        }
+      ),
+      A = colDef(
+        style = function(value, index, name) {
+          # base style: yellow if A == "1"
+          style <- if (value == "1") {
+            list(background = "#F2F3AE")
+          } else {
+            list()
+          }
+          
+          Y_value <- countefactual_data_smoking_parents$observed_y[index]
+          if ((value == "1" && Y_value == "1") | (value == "0" && Y_value == "0")) {
+            style$fontWeight <- "bold"
+          }
+          
+          style
+        }
+      ),
+    X = colDef(
+      show = FALSE
+    ),
+    Y_a0 = colDef(
+      show = FALSE
+    ),
+    Y_a1 = colDef(
+      show = FALSE
+    ),
+    ITE = colDef(
+      show = FALSE
+    )
+  ),
+  defaultColDef = colDef(maxWidth = 50),
+  style = list(fontSize = "1rem"))
+
+real_data_reactable_raw_smoking_parents
+
+```
+:::
+:::::
+
+In order to estimate Causal Bounds for PNS we can use the [Fréchet Inequalities](https://causality.cs.ucla.edu/blog/index.php/2019/11/05/frechet-inequalities/):
+
+$$\small{\text{PNS}  \leq min(\frac{4}{8},\frac{5}{8})}$$ $$\small{\text{PNS} \geq \frac{5}{8} - \frac{4}{8}}$$
+
+##  {.smaller}
+
+::::: columns
+::: {.column width="50%"}
+#### Control Arm 🚭
+
+$$\small{\hat{p}(Y=1|do(A=0)} = \frac{4}{8}$$
+
+```{r}
+
+countefactual_data_non_smoking_parents <- experimental_data |> 
+  filter(A == "0")
+
+real_data_reactable_raw_non_smoking_parents <- countefactual_data_non_smoking_parents |> 
+  reactable(
+        theme = reactableTheme(backgroundColor = "#F5F2EB",
+      tableStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      headerStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      cellStyle = list(
+        backgroundColor = "#F5F2EB"
+      )),
+  sortable = FALSE,
+  defaultPageSize = 19,
+  columns = list(
+      observed_y = colDef(
+        name = "Y",
+        style = function(value, index, name) {
+          # base style: pink if Y == "1"
+          style <- if (value == "1") {
+            list(background = "pink")
+          } else {
+            list()
+          }
+          
+          A_value <- countefactual_data_non_smoking_parents$A[index]
+          if ((A_value == "1" && value == "1") | (A_value == "0" && value == "0")) {
+            style$fontWeight <- "bold"
+          }
+          
+          style
+        }
+      ),
+      A = colDef(
+        style = function(value, index, name) {
+          # base style: yellow if A == "1"
+          style <- if (value == "1") {
+            list(background = "#F2F3AE")
+          } else {
+            list()
+          }
+          
+          Y_value <- countefactual_data_non_smoking_parents$observed_y[index]
+          if ((value == "1" && Y_value == "1") | (value == "0" && Y_value == "0")) {
+            style$fontWeight <- "bold"
+          }
+          
+          style
+        }
+      ),
+    X = colDef(
+      show = FALSE 
+    ),
+    Y_a0 = colDef(
+      show = FALSE
+    ),
+    Y_a1 = colDef(
+      show = FALSE
+    ),
+    ITE = colDef(
+      show = FALSE
+    )
+  ),
+  defaultColDef = colDef(maxWidth = 50),
+  style = list(fontSize = "1rem"))
+
+real_data_reactable_raw_non_smoking_parents
+
+```
+:::
+
+::: {.column width="50%"}
+#### Treatment Arm 🚬
+
+$$\small{\hat{p}(Y=1|do(A=1))} = \frac{5}{8}$$
+
+```{r}
+
+countefactual_data_smoking_parents <- experimental_data |> 
+  filter(A == "1")
+
+real_data_reactable_raw_smoking_parents <- countefactual_data_smoking_parents |> 
+  reactable(
+        theme = reactableTheme(backgroundColor = "#F5F2EB",
+      tableStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      headerStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      cellStyle = list(
+        backgroundColor = "#F5F2EB"
+      )),
+  sortable = FALSE,
+  defaultPageSize = 19,
+  columns = list(
+      observed_y = colDef(
+        name = "Y",
+        style = function(value, index, name) {
+          # base style: pink if Y == "1"
+          style <- if (value == "1") {
+            list(background = "pink")
+          } else {
+            list()
+          }
+          
+          A_value <- countefactual_data_smoking_parents$A[index]
+          if ((A_value == "1" && value == "1") | (A_value == "0" && value == "0")) {
+            style$fontWeight <- "bold"
+          }
+          
+          style
+        }
+      ),
+      A = colDef(
+        style = function(value, index, name) {
+          # base style: yellow if A == "1"
+          style <- if (value == "1") {
+            list(background = "#F2F3AE")
+          } else {
+            list()
+          }
+          
+          Y_value <- countefactual_data_smoking_parents$observed_y[index]
+          if ((value == "1" && Y_value == "1") | (value == "0" && Y_value == "0")) {
+            style$fontWeight <- "bold"
+          }
+          
+          style
+        }
+      ),
+    X = colDef(
+      show = FALSE
+    ),
+    Y_a0 = colDef(
+      show = FALSE
+    ),
+    Y_a1 = colDef(
+      show = FALSE
+    ),
+    ITE = colDef(
+      show = FALSE
+    )
+  ),
+  defaultColDef = colDef(maxWidth = 50),
+  style = list(fontSize = "1rem"))
+
+real_data_reactable_raw_smoking_parents
+
+```
+:::
+:::::
+
+In order to estimate Causal Bounds for PNS we can use the [Fréchet Inequalities](https://causality.cs.ucla.edu/blog/index.php/2019/11/05/frechet-inequalities/):
+
+$$\frac{1}{8} \leq\text{PNS} = \frac{4}{16}  \leq \frac{4}{8}$$
+
+The result resonates with the true god-given PNS!

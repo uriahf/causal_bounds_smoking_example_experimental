@@ -1,0 +1,17 @@
+project:
+  type: website
+  title: "causal_bounds_smoking_example"
+  output-dir: _site
+  resources:
+    - fonts
+
+brand: _brand.yml
+
+format:
+  revealjs:
+    theme: [default, custom-fonts.scss]
+    transition: none
+    background-transition: none
+    pdf-separate-fragments: false
+    lang: en
+    auto-stretch: true
