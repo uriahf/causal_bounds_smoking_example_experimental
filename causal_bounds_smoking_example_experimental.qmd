@@ -999,3 +999,425 @@ In order to estimate Causal Bounds for PNS we can use the [Fréchet Inequalities
 $$\frac{1}{8} \leq\text{PNS} = \frac{4}{16}  \leq \frac{4}{8}$$
 
 The result resonates with the true god-given PNS!
+
+# Monotonicity: From Bounds to Point-Estimate
+
+## {.smaller}
+
+::::: columns
+::: {.column width="35%"}
+
+```{r}
+tibble::tribble(
+    ~"type", ~"Y_a0", ~"Y_a1", ~"ITE",
+    "Lost Cause", "1", "1", "0",
+    "Responder", "0", "1", "1",
+    "Immuned", "0", "0", "0",
+    "Beneficier", "1", "0", "-1"
+) |> 
+  reactable(
+      theme = reactableTheme(backgroundColor = "#F5F2EB",
+      tableStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      headerStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      cellStyle = list(
+        backgroundColor = "#F5F2EB"
+      )
+      ),
+  columns = list(
+    type = colDef(
+      name = "",
+      maxWidth = 100
+    ),
+    Y_a0 = colDef(
+      name = "Y<sup>0",
+      html = TRUE
+    ),
+    Y_a1 = colDef(
+      name = "Y<sup>1",
+      html = TRUE
+    ),
+    ITE = colDef(
+      style = function(value) {
+      if(value == "1")
+      list(background = "pink")
+      else if(value == "-1")
+      list(background = "lightgreen")
+      },
+      html = TRUE
+    )
+  ),
+  defaultColDef = colDef(maxWidth = 50),
+  style = list(fontSize = "1rem")
+  )
+```
+
+:::
+
+::: {.column width="65%"}
+
+#### 4 Types of Patients, or is it 3?
+
+- The ITE on this example is being declared in harmful values - positive ITE means a harmful effect.
+
+:::
+
+::::
+
+## {.smaller}
+
+::::: columns
+::: {.column width="35%"}
+
+```{r}
+tibble::tribble(
+    ~"type", ~"Y_a0", ~"Y_a1", ~"ITE",
+    "Lost Cause", "1", "1", "0",
+    "Responder", "0", "1", "1",
+    "Immuned", "0", "0", "0",
+    "Beneficier", "1", "0", "-1"
+) |> 
+  reactable(
+      theme = reactableTheme(backgroundColor = "#F5F2EB",
+      tableStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      headerStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      cellStyle = list(
+        backgroundColor = "#F5F2EB"
+      )
+      ),
+  columns = list(
+    type = colDef(
+      name = "",
+      maxWidth = 100
+    ),
+    Y_a0 = colDef(
+      name = "Y<sup>0",
+      html = TRUE
+    ),
+    Y_a1 = colDef(
+      name = "Y<sup>1",
+      html = TRUE
+    ),
+    ITE = colDef(
+      style = function(value) {
+      if(value == "1")
+      list(background = "pink")
+      else if(value == "-1")
+      list(background = "lightgreen")
+      },
+      html = TRUE
+    )
+  ),
+  defaultColDef = colDef(maxWidth = 50),
+  style = list(fontSize = "1rem")
+  )
+```
+
+
+:::
+
+::: {.column width="65%"}
+
+#### 4 Types of Patients, or is it 3?
+
+- The ITE on this example is being declared in harmful values - positive ITE means a harmful effect.
+
+- Is it reasonable to allow positive effect of cigarettes in our analysis? Let's consider the bounds with no Beneficiers allowed.
+
+:::
+
+![](doctors_smoke_camels.jpg){fig-align="center" width="335"}
+
+::::
+
+##  {.smaller}
+
+::::: columns
+::: {.column width="50%"}
+#### Control Arm 🚭
+
+$$\small{\hat{p}(Y=1|do(A=0)} = \frac{4}{8}$$
+
+```{r}
+
+countefactual_data_non_smoking_parents <- experimental_data |> 
+  filter(A == "0")
+
+real_data_reactable_raw_non_smoking_parents <- countefactual_data_non_smoking_parents |> 
+  reactable(
+        theme = reactableTheme(backgroundColor = "#F5F2EB",
+      tableStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      headerStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      cellStyle = list(
+        backgroundColor = "#F5F2EB"
+      )),
+  sortable = FALSE,
+  defaultPageSize = 19,
+  columns = list(
+      observed_y = colDef(
+        name = "Y",
+        style = function(value, index, name) {
+          # base style: pink if Y == "1"
+          style <- if (value == "1") {
+            list(background = "pink")
+          } else {
+            list()
+          }
+          
+          A_value <- countefactual_data_non_smoking_parents$A[index]
+          if ((A_value == "1" && value == "1") | (A_value == "0" && value == "0")) {
+            style$fontWeight <- "bold"
+          }
+          
+          style
+        }
+      ),
+      A = colDef(
+        style = function(value, index, name) {
+          # base style: yellow if A == "1"
+          style <- if (value == "1") {
+            list(background = "#F2F3AE")
+          } else {
+            list()
+          }
+          
+          Y_value <- countefactual_data_non_smoking_parents$observed_y[index]
+          if ((value == "1" && Y_value == "1") | (value == "0" && Y_value == "0")) {
+            style$fontWeight <- "bold"
+          }
+          
+          style
+        }
+      ),
+    X = colDef(
+      show = FALSE 
+    ),
+    Y_a0 = colDef(
+      show = FALSE
+    ),
+    Y_a1 = colDef(
+      show = FALSE
+    ),
+    ITE = colDef(
+      show = FALSE
+    )
+  ),
+  defaultColDef = colDef(maxWidth = 50),
+  style = list(fontSize = "1rem"))
+
+real_data_reactable_raw_non_smoking_parents
+
+```
+:::
+
+::: {.column width="50%"}
+#### Treatment Arm 🚬
+
+$$\small{\hat{p}(Y=1|do(A=1))} = \frac{5}{8}$$
+
+```{r}
+
+countefactual_data_smoking_parents <- experimental_data |> 
+  filter(A == "1")
+
+real_data_reactable_raw_smoking_parents <- countefactual_data_smoking_parents |> 
+  reactable(
+        theme = reactableTheme(backgroundColor = "#F5F2EB",
+      tableStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      headerStyle = list(
+        backgroundColor = "#F5F2EB"
+      ),
+      cellStyle = list(
+        backgroundColor = "#F5F2EB"
+      )),
+  sortable = FALSE,
+  defaultPageSize = 19,
+  columns = list(
+      observed_y = colDef(
+        name = "Y",
+        style = function(value, index, name) {
+          # base style: pink if Y == "1"
+          style <- if (value == "1") {
+            list(background = "pink")
+          } else {
+            list()
+          }
+          
+          A_value <- countefactual_data_smoking_parents$A[index]
+          if ((A_value == "1" && value == "1") | (A_value == "0" && value == "0")) {
+            style$fontWeight <- "bold"
+          }
+          
+          style
+        }
+      ),
+      A = colDef(
+        style = function(value, index, name) {
+          # base style: yellow if A == "1"
+          style <- if (value == "1") {
+            list(background = "#F2F3AE")
+          } else {
+            list()
+          }
+          
+          Y_value <- countefactual_data_smoking_parents$observed_y[index]
+          if ((value == "1" && Y_value == "1") | (value == "0" && Y_value == "0")) {
+            style$fontWeight <- "bold"
+          }
+          
+          style
+        }
+      ),
+    X = colDef(
+      show = FALSE
+    ),
+    Y_a0 = colDef(
+      show = FALSE
+    ),
+    Y_a1 = colDef(
+      show = FALSE
+    ),
+    ITE = colDef(
+      show = FALSE
+    )
+  ),
+  defaultColDef = colDef(maxWidth = 50),
+  style = list(fontSize = "1rem"))
+
+real_data_reactable_raw_smoking_parents
+
+```
+:::
+:::::
+
+$$\small{\hat{p}(Y=1|do(A=0))} = \small{\hat{p}(\text{Lost-Causes}))} = \frac{4}{8}$$
+$$\small{\hat{p}(Y=0|do(A=1))} = \small{\hat{p}(\text{Immuned}))} = \frac{3}{8}$$
+$$\small{\text{PNS}} = {\hat{p}(\text{Responder})} = max(0, 1 - \frac{3}{8} - \frac{4}{8}) = \frac{1}{8}$$
+
+## 🦹 Evil RCT with Time Machine {.smaller}
+
+::::: columns
+::: {.column width="40%"}
+
+
+![](time_machine_rct.png)
+
+:::
+
+::: {.column width="60%"}
+
+
+
+```{r}
+
+counterfactual_data <- tibble::tribble(
+    ~"X", ~"Y_a0", ~"Y_a1",
+    0, 0, 1,
+    0, 0, 0,
+    0, 1, 1,
+    0, 0, 1,
+    0, 0, 0,
+    0, 0, 0,
+    1, 1, 1,
+    1, 1, 1,
+    1, 1, 1,
+    1, 1, 1,
+    1, 1, 1,
+    1, 0, 1,
+    1, 0, 0,
+    1, 0, 0,
+    1, 1, 1,
+    1, 0, 1
+)
+
+extract_pns_from_rct_events <- function(observed_rct_events, n_per_arm) {
+  observed_rct_events %>%
+    arrange(A) |>
+    summarise(
+      pns = diff(n) / n_per_arm,
+      .groups = "drop"
+    ) |>
+    dplyr::pull(pns)
+}
+
+run_evil_rct <- function(counterfactual_data) {
+  n_per_arm <- nrow(counterfactual_data) / 2
+
+  observed_rct_events <- counterfactual_data |>
+    mutate(
+      A = sample(rep(c(0L, 1L), each = n_per_arm))
+    ) |>
+    mutate(
+      observed_y = dplyr::if_else(A == 0L, Y_a0, Y_a1)
+    ) |>
+    group_by(A) |>
+    summarise(n = sum(observed_y), .groups = "drop")
+
+  extract_pns_from_rct_events(observed_rct_events, n_per_arm)
+}
+
+
+
+
+set.seed(42)
+
+
+results <- purrr::map_dbl(
+  1:1000,
+  ~run_evil_rct(counterfactual_data)
+)
+
+library(ggplot2)
+
+
+cream   <- "#F5F2EB"
+blue    <- "#0077C0"
+navy    <- "#001F3F"
+
+data.frame(pns = pmax(0, results)) |> 
+  count(pns)  |>
+  ggplot(aes(x = pns, y = n)) +
+  geom_col(fill = blue) +
+  labs(
+    x = "PNS estimate (truncated at 0)",
+    y = "Count"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    # Backgrounds
+    plot.background = element_rect(fill = cream, color = NA),
+    panel.background = element_rect(fill = cream, color = NA),
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(
+      face = "bold",
+      size = 16,
+      margin = margin(b = 10),
+      color = navy
+    ),
+    axis.title = element_text(size = 14, color = navy),
+    axis.text = element_text(color = navy)
+  )
+
+```
+
+:::
+
+Our supervillain didn't trust the estimated PNS=1/8, so he decided to use a Time-Machine and re-randomize the patients for treatment and control over and over again.
+
+As can be seen from his histogram, the most frequent estimate is equal to the true God-Given PNS = 4/16 = **0.25**.
+:::::
+
+
