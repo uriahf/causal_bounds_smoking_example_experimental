@@ -103,11 +103,11 @@ countefactual_data_reactable_raw <- experimental_data |>
       show = FALSE
     ),
     Y_a0 = colDef(
-      name = "Y<sup>0",
+      name = "Y<sub>0</sub>",
       html = TRUE
     ),
     Y_a1 = colDef(
-      name = "Y<sup>1",
+      name = "Y<sub>1</sub>",
       html = TRUE
     )
   ),
@@ -121,6 +121,8 @@ countefactual_data_reactable_raw
 
 ::: {.column width="65%"}
 #### 😇 God-Given Counterfactual Data
+
+Here $A=0$ means not smoking, $A=1$ means smoking, and $Y=1$ means COPD. $Y_0$ and $Y_1$ are the COPD outcomes under not smoking and smoking, respectively. $\mathrm{ITE} = Y_1 - Y_0$; positive ITE means harm.
 
 -   By God-Given knowledge we have access to the true counterfactual outcomes for each individual for smoking 🚬 and for not smoking 🚭
 :::
@@ -155,11 +157,11 @@ countefactual_data_reactable_raw_with_ITE <- experimental_data |>
       show = FALSE
     ),
     Y_a0 = colDef(
-      name = "Y<sup>0",
+      name = "Y<sub>0</sub>",
       html = TRUE
     ),
     Y_a1 = colDef(
-      name = "Y<sup>1",
+      name = "Y<sub>1</sub>",
       html = TRUE
     ),
     ITE = colDef(
@@ -183,7 +185,7 @@ countefactual_data_reactable_raw_with_ITE
 
 -   This gives us 4 Responders: people who get COPD only if they smoke, and avoid it otherwise. It also goes by the name **PNS**: **P**robability of **N**ecessity and **S**ufficiensy:
 
-$\text{PNS} = \frac{4}{16} = 0.25$
+$\mathrm{PNS} = p(Y_1=1, Y_0=0) = \frac{4}{16} = 0.25$
 :::
 :::::
 
@@ -219,11 +221,11 @@ countefactual_data_reactable_raw_with_ITE <- experimental_data |>
     }
     ),
     Y_a0 = colDef(
-      name = "Y<sup>0",
+      name = "Y<sub>0</sub>",
       html = TRUE
     ),
     Y_a1 = colDef(
-      name = "Y<sup>1",
+      name = "Y<sub>1</sub>",
       html = TRUE
     ),
     ITE = colDef(
@@ -247,7 +249,7 @@ countefactual_data_reactable_raw_with_ITE
 
 -   This gives us 4 Responders: people who get COPD only if they smoke, and avoid it otherwise. It also goes by the name **PNS**: **P**robability of **N**ecessity and **S**ufficiensy:
 
-$\text{PNS} = \frac{4}{16} = 0.25$
+$\mathrm{PNS} = p(Y_1=1, Y_0=0) = \frac{4}{16} = 0.25$
 
 -   In order to estimate the **A**verage-**T**reatment-**E**ffect an evil researcher forced a Randomized Controlled Trial.
 :::
@@ -312,7 +314,7 @@ countefactual_data_reactable_raw_with_ITE
 
 -   This gives us 4 Responders: people who get COPD only if they smoke, and avoid it otherwise. It also goes by the name **PNS**: **P**robability of **N**ecessity and **S**ufficiensy:
 
-$\text{PNS} = \frac{4}{16} = 0.25$
+$\mathrm{PNS} = p(Y_1=1, Y_0=0) = \frac{4}{16} = 0.25$
 
 -   In order to estimate the **A**verage-**T**reatment-**E**ffect an evil researcher forced a Randomized Controlled Trial.
 
@@ -326,7 +328,7 @@ $\text{PNS} = \frac{4}{16} = 0.25$
 ::: {.column width="50%"}
 #### Control Arm 🚭
 
-$$\small{\hat{p}(Y=1|do(A=0)} = \frac{4}{8}$$
+$\small{\hat{p}(Y_0=1) = \frac{4}{8}}$
 
 ```{r}
 
@@ -407,7 +409,7 @@ real_data_reactable_raw_non_smoking_parents
 ::: {.column width="50%"}
 #### Treatment Arm 🚬
 
-$$\small{\hat{p}(Y=1|do(A=1))} = \frac{5}{8}$$
+$\small{\hat{p}(Y_1=1) = \frac{5}{8}}$
 
 ```{r}
 
@@ -494,7 +496,7 @@ In order to estimate Causal Bounds for PNS we can use the [Fréchet Inequalities
 ::: {.column width="50%"}
 #### Control Arm 🚭
 
-$$\small{\hat{p}(Y=1|do(A=0)} = \frac{4}{8}$$
+$\small{\hat{p}(Y_0=1) = \frac{4}{8}}$
 
 ```{r}
 
@@ -575,7 +577,7 @@ real_data_reactable_raw_non_smoking_parents
 ::: {.column width="50%"}
 #### Treatment Arm 🚬
 
-$$\small{\hat{p}(Y=1|do(A=1))} = \frac{5}{8}$$
+$\small{\hat{p}(Y_1=1) = \frac{5}{8}}$
 
 ```{r}
 
@@ -656,7 +658,13 @@ real_data_reactable_raw_smoking_parents
 
 In order to estimate Causal Bounds for PNS we can use the [Fréchet Inequalities](https://causality.cs.ucla.edu/blog/index.php/2019/11/05/frechet-inequalities/):
 
-$$\small{\text{PNS} = {\hat{p}(Y=1|do(A=1) , Y=0|do(A=0))} \leq min(\hat{p}(Y=1|do(A=1),\hat{p}(Y=0|do(A=0))))}$$ $$\small{\text{PNS} = {\hat{p}(Y=1|do(A=1) , Y=0|do(A=0))} \geq \hat{p}(Y=1|do(A=1)) - \hat{p}(Y=1|do(A=0))}$$
+The RCT estimates the marginals, not the joint probability $\mathrm{PNS} = p(Y_1=1, Y_0=0)$. The population Fréchet bounds are:
+
+$$\small{\max\{0, p(Y_1=1)-p(Y_0=1)\} \leq \mathrm{PNS} \leq \min\{p(Y_1=1), p(Y_0=0)\}}$$
+
+Plug-in estimates of these bounds:
+
+$$\small{\widehat{L}=\max\{0,\hat{p}(Y_1=1)-\hat{p}(Y_0=1)\},\quad \widehat{U}=\min\{\hat{p}(Y_1=1),\hat{p}(Y_0=0)\}}$$
 
 ##  {.smaller}
 
@@ -664,7 +672,7 @@ $$\small{\text{PNS} = {\hat{p}(Y=1|do(A=1) , Y=0|do(A=0))} \leq min(\hat{p}(Y=1|
 ::: {.column width="50%"}
 #### Control Arm 🚭
 
-$$\small{\hat{p}(Y=1|do(A=0)} = \frac{4}{8}$$
+$\small{\hat{p}(Y_0=1) = \frac{4}{8}}$
 
 ```{r}
 
@@ -745,7 +753,7 @@ real_data_reactable_raw_non_smoking_parents
 ::: {.column width="50%"}
 #### Treatment Arm 🚬
 
-$$\small{\hat{p}(Y=1|do(A=1))} = \frac{5}{8}$$
+$\small{\hat{p}(Y_1=1) = \frac{5}{8}}$
 
 ```{r}
 
@@ -826,7 +834,10 @@ real_data_reactable_raw_smoking_parents
 
 In order to estimate Causal Bounds for PNS we can use the [Fréchet Inequalities](https://causality.cs.ucla.edu/blog/index.php/2019/11/05/frechet-inequalities/):
 
-$$\small{\text{PNS}  \leq min(\frac{4}{8},\frac{5}{8})}$$ $$\small{\text{PNS} \geq \frac{5}{8} - \frac{4}{8}}$$
+Plug-in estimates of the bounds (not exact population inequalities):
+
+$$\small{\widehat{U}=\min\{\frac{4}{8},\frac{5}{8}\}=\frac{4}{8}}$$
+$$\small{\widehat{L}=\max\{0,\frac{5}{8}-\frac{4}{8}\}=\frac{1}{8}}$$
 
 ##  {.smaller}
 
@@ -834,7 +845,7 @@ $$\small{\text{PNS}  \leq min(\frac{4}{8},\frac{5}{8})}$$ $$\small{\text{PNS} \g
 ::: {.column width="50%"}
 #### Control Arm 🚭
 
-$$\small{\hat{p}(Y=1|do(A=0)} = \frac{4}{8}$$
+$\small{\hat{p}(Y_0=1) = \frac{4}{8}}$
 
 ```{r}
 
@@ -915,7 +926,7 @@ real_data_reactable_raw_non_smoking_parents
 ::: {.column width="50%"}
 #### Treatment Arm 🚬
 
-$$\small{\hat{p}(Y=1|do(A=1))} = \frac{5}{8}$$
+$\small{\hat{p}(Y_1=1) = \frac{5}{8}}$
 
 ```{r}
 
@@ -996,7 +1007,9 @@ real_data_reactable_raw_smoking_parents
 
 In order to estimate Causal Bounds for PNS we can use the [Fréchet Inequalities](https://causality.cs.ucla.edu/blog/index.php/2019/11/05/frechet-inequalities/):
 
-$$\frac{1}{8} \leq\text{PNS} = \frac{4}{16}  \leq \frac{4}{8}$$
+$$\widehat{L}=\frac{1}{8},\qquad \widehat{U}=\frac{4}{8}$$
+
+The God-given value $\mathrm{PNS}=\frac{4}{16}$ lies between these estimated bounds; this is not a population inequality guaranteed by the estimated marginals.
 
 The result resonates with the true god-given PNS!
 
@@ -1033,11 +1046,11 @@ tibble::tribble(
       maxWidth = 100
     ),
     Y_a0 = colDef(
-      name = "Y<sup>0",
+      name = "Y<sub>0</sub>",
       html = TRUE
     ),
     Y_a1 = colDef(
-      name = "Y<sup>1",
+      name = "Y<sub>1</sub>",
       html = TRUE
     ),
     ITE = colDef(
@@ -1061,7 +1074,7 @@ tibble::tribble(
 
 #### 4 Types of Patients, or is it 3?
 
-- The ITE on this example is being declared in harmful values - positive ITE means a harmful effect.
+- $\mathrm{ITE} = Y_1 - Y_0$ is expressed in harmful values: positive ITE means harm.
 
 :::
 
@@ -1098,11 +1111,11 @@ tibble::tribble(
       maxWidth = 100
     ),
     Y_a0 = colDef(
-      name = "Y<sup>0",
+      name = "Y<sub>0</sub>",
       html = TRUE
     ),
     Y_a1 = colDef(
-      name = "Y<sup>1",
+      name = "Y<sub>1</sub>",
       html = TRUE
     ),
     ITE = colDef(
@@ -1127,9 +1140,9 @@ tibble::tribble(
 
 #### 4 Types of Patients, or is it 3?
 
-- The ITE on this example is being declared in harmful values - positive ITE means a harmful effect.
+- $\mathrm{ITE} = Y_1 - Y_0$ is expressed in harmful values: positive ITE means harm.
 
-- Is it reasonable to allow positive effect of cigarettes in our analysis? Let's consider the bounds with no Beneficiers allowed.
+- Assume monotonicity, $Y_1 \geq Y_0$: smoking cannot prevent COPD. This excludes Beneficiers and preserves the harmful-effect interpretation.
 
 :::
 
@@ -1143,7 +1156,7 @@ tibble::tribble(
 ::: {.column width="50%"}
 #### Control Arm 🚭
 
-$$\small{\hat{p}(Y=1|do(A=0)} = \frac{4}{8}$$
+$\small{\hat{p}(Y_0=1) = \frac{4}{8}}$
 
 ```{r}
 
@@ -1224,7 +1237,7 @@ real_data_reactable_raw_non_smoking_parents
 ::: {.column width="50%"}
 #### Treatment Arm 🚬
 
-$$\small{\hat{p}(Y=1|do(A=1))} = \frac{5}{8}$$
+$\small{\hat{p}(Y_1=1) = \frac{5}{8}}$
 
 ```{r}
 
@@ -1303,9 +1316,9 @@ real_data_reactable_raw_smoking_parents
 :::
 :::::
 
-$$\small{\hat{p}(Y=1|do(A=0))} = \small{\hat{p}(\text{Lost-Causes}))} = \frac{4}{8}$$
-$$\small{\hat{p}(Y=0|do(A=1))} = \small{\hat{p}(\text{Immuned}))} = \frac{3}{8}$$
-$$\small{\text{PNS}} = {\hat{p}(\text{Responder})} = max(0, 1 - \frac{3}{8} - \frac{4}{8}) = \frac{1}{8}$$
+$$\small{\hat{p}(Y_0=1)=\hat{p}(\text{Lost-Causes})=\frac{4}{8}}$$
+$$\small{\hat{p}(Y_1=0)=\hat{p}(\text{Immuned})=\frac{3}{8}}$$
+$$\small{\widehat{\mathrm{PNS}}=\hat{p}(\text{Responder})=\max\{0,1-\frac{3}{8}-\frac{4}{8}\}=\frac{1}{8}}$$
 
 ## 🦹 Evil RCT with Time Machine {.smaller}
 
